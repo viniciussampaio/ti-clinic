@@ -1,0 +1,29 @@
+# Stack: MySQL + API (ti-clinic-test) + front (Vue).
+# Na pasta ti-clinic-teste:
+#   docker compose --env-file ./ti-clinic-test/.env.docker up --build
+#
+# Front: http://localhost:${WEB_PORT_EXPOSE:-8080}
+# API (no navegador): http://localhost:${API_PORT_EXPOSE:-3000}
+
+include:
+  - path: ./ti-clinic-test/docker-compose.yml
+
+services:
+  web:
+    build:
+      context: ./ti-clinic-front
+      dockerfile: Dockerfile
+    environment:
+      VUE_APP_API_BASE_URL: http://localhost:${API_PORT_EXPOSE:-3000}
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "${WEB_PORT_EXPOSE:-8080}:8080"
+    volumes:
+      - ./ti-clinic-front:/app
+      - front_node_modules:/app/node_modules
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  front_node_modules:

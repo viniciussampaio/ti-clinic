@@ -1,7 +1,6 @@
 <template>
   <section class="doctors">
     <div class="header">
-      <h1>Médicos</h1>
       <q-btn
         color="primary"
         unelevated
@@ -16,44 +15,46 @@
         <h2>Médicos cadastrados</h2>
       </q-card-section>
       <q-separator />
-      <q-table
-        flat
-        dense
-        :data="doctors"
-        :columns="columns"
-        row-key="id"
-        :loading="isLoadingDoctors"
-        no-data-label="Nenhum médico cadastrado."
-      >
-        <template #body-cell-specialty="props">
-          <q-td :props="props">
-            {{ formatSpecialtyName(props.row.specialty) }}
-          </q-td>
-        </template>
+      <div class="table-scroll">
+        <q-table
+          flat
+          dense
+          :data="doctors"
+          :columns="columns"
+          row-key="id"
+          :loading="isLoadingDoctors"
+          no-data-label="Nenhum médico cadastrado."
+        >
+          <template #body-cell-specialty="props">
+            <q-td :props="props">
+              {{ formatSpecialtyName(props.row.specialty) }}
+            </q-td>
+          </template>
 
-        <template #body-cell-actions="props">
-          <q-td :props="props">
-            <div class="actions-cell">
-              <q-btn
-                dense
-                flat
-                round
-                color="primary"
-                icon="edit"
-                @click="openEditDialog(props.row)"
-              />
-              <q-btn
-                dense
-                flat
-                round
-                color="negative"
-                icon="delete"
-                @click="onDeleteDoctor(props.row.id)"
-              />
-            </div>
-          </q-td>
-        </template>
-      </q-table>
+          <template #body-cell-actions="props">
+            <q-td :props="props">
+              <div class="actions-cell">
+                <q-btn
+                  dense
+                  flat
+                  round
+                  color="primary"
+                  icon="edit"
+                  @click="openEditDialog(props.row)"
+                />
+                <q-btn
+                  dense
+                  flat
+                  round
+                  color="negative"
+                  icon="delete"
+                  @click="onDeleteDoctor(props.row.id)"
+                />
+              </div>
+            </q-td>
+          </template>
+        </q-table>
+      </div>
     </q-card>
 
     <q-dialog v-model="isDialogOpen" persistent>
@@ -157,6 +158,8 @@ export default Vue.extend({
       field: string;
       align?: "left" | "right" | "center";
       sortable?: boolean;
+      style?: string;
+      headerStyle?: string;
     }>;
   } {
     return {
@@ -207,6 +210,7 @@ export default Vue.extend({
           field: "actions",
           align: "right",
           sortable: false,
+          headerStyle: "text-align: right",
         },
       ],
     };
@@ -224,9 +228,10 @@ export default Vue.extend({
   },
   methods: {
     formatSpecialtyName(
-      specialty: { name?: string | null } | null | undefined
+      specialty: { name?: string | null } | null | undefined,
     ): string {
-      const name = typeof specialty?.name === "string" ? specialty.name.trim() : "";
+      const name =
+        typeof specialty?.name === "string" ? specialty.name.trim() : "";
       return name || "-";
     },
     validateRequiredName(value: string): true | string {
@@ -277,7 +282,7 @@ export default Vue.extend({
         return;
       }
       const selectedSpecialty = this.specialties.find(
-        (specialty) => String(specialty.id || "") === this.form.specialtyId
+        (specialty) => String(specialty.id || "") === this.form.specialtyId,
       );
       if (!selectedSpecialty) {
         return;
@@ -305,9 +310,41 @@ export default Vue.extend({
         this.isSubmitting = false;
       }
     },
+    showToast(type: "positive" | "negative", message: string): void {
+      const quasar = (
+        this as Vue & {
+          $q?: {
+            notify: (payload: { type: string; message: string }) => void;
+          };
+        }
+      ).$q;
+      quasar?.notify({ type, message });
+    },
+    extractErrorMessage(error: unknown, fallback: string): string {
+      const data = (
+        error as {
+          response?: { data?: { message?: string | string[] } };
+        }
+      )?.response?.data;
+      const msg = data?.message;
+      if (typeof msg === "string" && msg.trim()) {
+        return msg.trim();
+      }
+      if (Array.isArray(msg) && msg.length && typeof msg[0] === "string") {
+        return msg[0].trim();
+      }
+      return fallback;
+    },
     async onDeleteDoctor(id: string): Promise<void> {
-      await deleteDoctorRequest(id);
-      await this.loadDoctors();
+      try {
+        await deleteDoctorRequest(id);
+        await this.loadDoctors();
+      } catch (error) {
+        this.showToast(
+          "negative",
+          this.extractErrorMessage(error, "Nao foi possivel excluir o medico."),
+        );
+      }
     },
     onCloseDialog(): void {
       this.isDialogOpen = false;
@@ -324,7 +361,7 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 .doctors {
-  width: min(900px, 100%);
+  width: min(1140px, 100%);
   margin: 0 auto;
   padding: 2rem 1rem 2.5rem;
 }
@@ -347,7 +384,26 @@ export default Vue.extend({
   border-radius: 12px;
   border-color: #d4e5ee;
   background: #fff;
-  min-height: 540px;
+}
+
+.doctors-card :deep(table.q-table) {
+  table-layout: auto;
+  width: 100%;
+}
+
+.doctors-card :deep(table.q-table) thead tr th,
+.doctors-card :deep(table.q-table) tbody tr td {
+  padding: 0.35rem 0.45rem;
+}
+
+.doctors-card :deep(table.q-table) thead tr th:first-child,
+.doctors-card :deep(table.q-table) tbody tr td:first-child {
+  padding-right: 0.35rem;
+}
+
+.doctors-card :deep(table.q-table) thead tr th:last-child,
+.doctors-card :deep(table.q-table) tbody tr td:last-child {
+  padding-left: 0.35rem;
 }
 
 .doctors-header h2 {
@@ -357,7 +413,8 @@ export default Vue.extend({
 }
 
 .dialog-card {
-  width: min(620px, 95vw);
+  width: min(620px, min(95vw, 100%));
+  max-width: 100%;
 }
 
 .dialog-header {

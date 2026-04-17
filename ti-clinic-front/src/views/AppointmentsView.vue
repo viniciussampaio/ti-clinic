@@ -1,7 +1,6 @@
 <template>
   <section class="appointments">
     <div class="header">
-      <h1>Agendamento de Consultas</h1>
       <q-btn
         color="primary"
         unelevated
@@ -16,35 +15,37 @@
         <h2>Consultas agendadas</h2>
       </q-card-section>
       <q-separator />
-      <q-table
-        flat
-        :data="appointments"
-        :columns="columns"
-        row-key="id"
-        :loading="isLoadingAppointments"
-        no-data-label="Nenhuma consulta agendada."
-      >
-        <template #body-cell-actions="props">
-          <q-td :props="props" class="actions-cell">
-            <q-btn
-              dense
-              flat
-              round
-              color="primary"
-              icon="edit"
-              @click="openEditDialog(props.row)"
-            />
-            <q-btn
-              dense
-              flat
-              round
-              color="negative"
-              icon="cancel"
-              @click="openCancelDialog(props.row)"
-            />
-          </q-td>
-        </template>
-      </q-table>
+      <div class="table-scroll table-scroll--wide">
+        <q-table
+          flat
+          :data="appointments"
+          :columns="columns"
+          row-key="id"
+          :loading="isLoadingAppointments"
+          no-data-label="Nenhuma consulta agendada."
+        >
+          <template #body-cell-actions="props">
+            <q-td :props="props" class="actions-cell">
+              <q-btn
+                dense
+                flat
+                round
+                color="primary"
+                icon="edit"
+                @click="openEditDialog(props.row)"
+              />
+              <q-btn
+                dense
+                flat
+                round
+                color="negative"
+                icon="cancel"
+                @click="openCancelDialog(props.row)"
+              />
+            </q-td>
+          </template>
+        </q-table>
+      </div>
     </q-card>
 
     <q-dialog v-model="isDialogOpen" persistent>
@@ -61,6 +62,7 @@
                 <legend class="field-kind-legend">Tipo de atendimento</legend>
                 <q-option-group
                   v-model="form.appointmentKind"
+                  class="field-kind-options"
                   :options="appointmentKindOptions"
                   color="primary"
                   inline
@@ -275,7 +277,7 @@
     </q-dialog>
 
     <q-dialog v-model="isCancelDialogOpen" persistent>
-      <q-card style="min-width: 320px">
+      <q-card class="cancel-dialog-card">
         <q-card-section>
           <div class="text-h6">Cancelar consulta</div>
           <p>
@@ -434,13 +436,6 @@ export default Vue.extend({
         time: "",
       },
       columns: [
-        {
-          name: "id",
-          label: "ID",
-          field: "id",
-          align: "left",
-          sortable: true,
-        },
         {
           name: "patientName",
           label: "Paciente",
@@ -1000,7 +995,7 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 .appointments {
-  width: min(1140px, 100%);
+  width: min(1140px, 90%);
   margin: 0 auto;
   padding: 2rem 1rem 2.5rem;
 }
@@ -1023,7 +1018,6 @@ export default Vue.extend({
   border-radius: 12px;
   border-color: #d4e5ee;
   background: #fff;
-  min-height: 540px;
 }
 
 .appointments-header h2 {
@@ -1033,7 +1027,13 @@ export default Vue.extend({
 }
 
 .dialog-card {
-  width: min(620px, 95vw);
+  width: min(620px, min(95vw, 100%));
+  max-width: 100%;
+}
+
+.cancel-dialog-card {
+  width: min(360px, 100vw - 2rem);
+  max-width: 100%;
 }
 
 .dialog-header {
@@ -1076,6 +1076,11 @@ export default Vue.extend({
   .header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .field-kind-options::v-deep(> div) {
+    display: block;
+    width: 100%;
   }
 }
 </style>

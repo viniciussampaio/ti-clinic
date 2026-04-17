@@ -4,17 +4,17 @@ import { flushPromises } from "./helpers/flush-promises";
 
 jest.mock("@/services/procedures/procedures", () => ({
   getProceduresRequest: jest.fn(),
-  createSpecialtyRequest: jest.fn(),
-  updateSpecialtyRequest: jest.fn(),
-  deleteSpecialtyRequest: jest.fn(),
+  createProcedureRequest: jest.fn(),
+  updateProcedureRequest: jest.fn(),
+  deleteProcedureRequest: jest.fn(),
 }));
 
 const {
   getProceduresRequest,
-  deleteSpecialtyRequest,
+  deleteProcedureRequest,
 } = jest.requireMock("@/services/procedures/procedures") as {
   getProceduresRequest: jest.Mock;
-  deleteSpecialtyRequest: jest.Mock;
+  deleteProcedureRequest: jest.Mock;
 };
 
 function mountView() {
@@ -53,13 +53,13 @@ describe("ProceduresView.vue", () => {
     const wrapper = mountView();
     await flushPromises();
 
-    deleteSpecialtyRequest.mockResolvedValueOnce(undefined);
+    deleteProcedureRequest.mockResolvedValueOnce(undefined);
     getProceduresRequest.mockResolvedValueOnce([
       { id: 2, name: "Raio X", price: "200" },
     ]);
 
     await (wrapper.vm as any).onDeleteProcedure("2");
-    expect(deleteSpecialtyRequest).toHaveBeenCalledWith("2");
+    expect(deleteProcedureRequest).toHaveBeenCalledWith("2");
     expect(getProceduresRequest).toHaveBeenCalledTimes(2);
   });
 });

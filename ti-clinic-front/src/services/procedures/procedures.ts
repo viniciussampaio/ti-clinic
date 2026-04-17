@@ -1,4 +1,4 @@
-import { Procedure } from "@/types/procedures";
+import { Procedure, ProcedureMutationBody } from "@/types/procedures";
 import { api } from "../api";
 
 export async function getProceduresRequest(): Promise<Procedure[]> {
@@ -6,22 +6,22 @@ export async function getProceduresRequest(): Promise<Procedure[]> {
   return response.data;
 }
 
-export async function createSpecialtyRequest(
-  procedure: Procedure
+export async function createProcedureRequest(
+  body: ProcedureMutationBody
 ): Promise<void> {
-  const response = await api.post("/procedures", procedure);
+  const response = await api.post("/procedures", body);
   return response.data;
 }
 
-export async function deleteSpecialtyRequest(id: string): Promise<void> {
+export async function deleteProcedureRequest(id: string): Promise<void> {
   const response = await api.delete(`/procedures/${id}`);
   return response.data;
 }
 
-export async function updateSpecialtyRequest(
+export async function updateProcedureRequest(
   id: string,
-  procedure: Procedure
+  body: ProcedureMutationBody
 ): Promise<void> {
-  const response = await api.patch(`/procedures/${id}`, procedure);
+  const response = await api.patch(`/procedures/${id}`, body);
   return response.data;
 }

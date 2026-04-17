@@ -55,6 +55,14 @@ yarn migration:show
 
 ### Subir stack (API + MySQL)
 
+O Compose le o arquivo `.env` da pasta do projeto para substituir portas no YAML. O arquivo `.env.docker` define ambiente **dentro** dos containers; para usar tambem as portas `API_PORT_EXPOSE` e `DB_PORT_EXPOSE` definidas la, passe o mesmo arquivo na linha de comando:
+
+```bash
+docker compose --env-file .env.docker up --build
+```
+
+Sem `--env-file`, use `API_PORT_EXPOSE` e `DB_PORT_EXPOSE` no seu `.env` na raiz do `ti-clinic-test`, ou suba assim:
+
 ```bash
 docker compose up --build
 ```
@@ -62,7 +70,7 @@ docker compose up --build
 ### Subir em background
 
 ```bash
-docker compose up --build -d
+docker compose --env-file .env.docker up --build -d
 ```
 
 ### Ver containers
@@ -98,17 +106,22 @@ docker compose down -v
 
 ### Caso as portas padrao estejam ocupadas
 
+Nao use `PORT` para mudar a porta no host: `PORT` e a porta em que o Nest escuta **dentro** do container e deve combinar com o lado direito do mapeamento (`...:3000`).
+
+Use `API_PORT_EXPOSE` (API no host) e `DB_PORT_EXPOSE` (MySQL no host):
+
 ```bash
-# API em 3001 e MySQL em 3307
-# PowerShell:
-$env:PORT=3001
+# PowerShell (sessao atual):
+$env:API_PORT_EXPOSE=3001
 $env:DB_PORT_EXPOSE=3307
 docker compose up --build -d
 ```
 
+Ou defina essas variaveis no arquivo `.env` ao lado de `docker-compose.yml`.
+
 ## Acesso rapido (com Docker ligado)
 
-- API: `http://localhost:3001` (ou a porta em `PORT`)
-- Swagger: `http://localhost:3001/api`
-- MySQL: `localhost:3307` (ou a porta em `DB_PORT_EXPOSE`)
+- API: `http://localhost:<API_PORT_EXPOSE>` (padrao **3000** se nao definir nada; `.env.docker` usa **3001** com `--env-file .env.docker`)
+- Swagger: mesma base URL + `/api`
+- MySQL no host: `localhost:<DB_PORT_EXPOSE>` (padrao **3306**; `.env.docker` usa **3307**)
 

@@ -7,6 +7,14 @@ Vue.use(VueRouter);
 
 const routes: Array<RouteConfig> = [
   {
+    path: "/para-avaliador",
+    name: "evaluator-guide",
+    component: () =>
+      import(
+        /* webpackChunkName: "evaluator-guide" */ "../views/EvaluatorGuideView.vue"
+      ),
+  },
+  {
     path: "/login",
     name: "login",
     component: () =>
@@ -74,6 +82,8 @@ const routes: Array<RouteConfig> = [
 ];
 
 const router = new VueRouter({
+  mode: "history",
+  base: process.env.BASE_URL,
   routes,
 });
 

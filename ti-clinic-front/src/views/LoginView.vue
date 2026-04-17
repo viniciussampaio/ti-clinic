@@ -56,6 +56,12 @@
             Cadastre-se
           </button>
         </p>
+
+        <p class="evaluator-hint">
+          <router-link class="evaluator-link" :to="{ name: 'evaluator-guide' }">
+            Informações para avaliadores
+          </router-link>
+        </p>
       </form>
     </div>
 
@@ -544,6 +550,24 @@ export default Vue.extend({
   }
 }
 
+.evaluator-hint {
+  margin: 1rem 0 0;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.evaluator-link {
+  font-weight: 600;
+  color: #1f6f96;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(31, 111, 150, 0.35);
+
+  &:hover {
+    color: #0d3d5c;
+    border-bottom-color: #0d3d5c;
+  }
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -657,6 +681,26 @@ export default Vue.extend({
   &:disabled {
     opacity: 0.65;
     cursor: not-allowed;
+  }
+}
+
+@media (max-width: 400px) {
+  .login-page {
+    padding: 1rem;
+  }
+
+  .login-card {
+    padding: 1.5rem 1.15rem 1.75rem;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .modal-actions .btn-secondary,
+  .modal-actions .btn-primary {
+    width: 100%;
   }
 }
 </style>

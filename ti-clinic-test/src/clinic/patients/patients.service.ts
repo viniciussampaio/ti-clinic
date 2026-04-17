@@ -97,7 +97,7 @@ export class PatientsService {
   async findAll() {
     const patients = await this.repo.find({
       relations: this.patientRelations,
-      order: { name: 'DESC' },
+      order: { name: 'desc' },
     });
     return patients.map((patient) => this.toResponse(patient));
   }

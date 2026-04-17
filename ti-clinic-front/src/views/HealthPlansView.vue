@@ -1,7 +1,6 @@
 <template>
   <section class="health-plans">
     <div class="header">
-      <h1>Planos de Saude</h1>
       <q-btn
         color="primary"
         unelevated
@@ -17,14 +16,20 @@
         <h2>Planos cadastrados</h2>
       </q-card-section>
       <q-separator />
-      <q-table
-        flat
-        :data="healthPlans"
-        :columns="columns"
-        row-key="id"
-        :loading="isLoadingPlans"
-        no-data-label="Nenhum plano cadastrado."
-      >
+      <div class="table-scroll">
+        <q-table
+          flat
+          :data="healthPlans"
+          :columns="columns"
+          row-key="id"
+          :loading="isLoadingPlans"
+          no-data-label="Nenhum plano cadastrado."
+        >
+        <template #body-cell-phone="props">
+          <q-td :props="props">
+            {{ formatPhone(props.row.phone) }}
+          </q-td>
+        </template>
         <template #body-cell-actions="props">
           <q-td :props="props">
             <q-btn
@@ -37,7 +42,8 @@
             />
           </q-td>
         </template>
-      </q-table>
+        </q-table>
+      </div>
     </q-card>
 
     <q-dialog v-model="isDialogOpen" persistent>
@@ -58,12 +64,15 @@
                 :rules="[validateRequiredDescription]"
               />
               <q-input
-                v-model.trim="form.phone"
+                v-model="form.phone"
                 outlined
+                type="tel"
                 label="Telefone"
-                mask="####-###-####"
+                placeholder="(00) 00000-0000"
+                mask="(##) #####-####"
+                autocomplete="tel"
                 lazy-rules
-                :rules="[validateRequiredPhone]"
+                :rules="[validateRequiredPhone, validatePhoneDigits]"
               />
               <div class="form-actions">
                 <q-btn flat label="Cancelar" @click="onCloseDialog" />
@@ -160,7 +169,31 @@ export default Vue.extend({
       return Boolean(value) || "Informe a descrição.";
     },
     validateRequiredPhone(value: string): true | string {
-      return Boolean(value) || "Informe o telefone.";
+      return Boolean(value && String(value).replace(/\D/g, "").length) ||
+        "Informe o telefone.";
+    },
+    validatePhoneDigits(value: string): true | string {
+      const digits = String(value ?? "").replace(/\D/g, "");
+      if (!digits.length) {
+        return true;
+      }
+      if (digits.length < 10 || digits.length > 11) {
+        return "Use DDD + numero (10 digitos fixo ou 11 celular).";
+      }
+      return true;
+    },
+    formatPhone(value: string | null | undefined): string {
+      if (!value) {
+        return "-";
+      }
+      const digits = value.replace(/\D/g, "");
+      if (digits.length === 11) {
+        return digits.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+      }
+      if (digits.length === 10) {
+        return digits.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
+      }
+      return value;
     },
     async loadHealthPlans(): Promise<void> {
       this.errorMessage = "";
@@ -175,14 +208,15 @@ export default Vue.extend({
       }
     },
     async onCreatePlan(): Promise<void> {
-      if (!this.form.description || !this.form.phone) {
+      const phoneDigits = String(this.form.phone ?? "").replace(/\D/g, "");
+      if (!this.form.description.trim() || phoneDigits.length < 10) {
         return;
       }
       try {
         this.isSubmitting = true;
         await createHealthPlanRequest({
-          description: this.form.description,
-          phone: this.form.phone,
+          description: this.form.description.trim(),
+          phone: phoneDigits,
         });
         await this.loadHealthPlans();
         this.onCloseDialog();
@@ -234,7 +268,6 @@ export default Vue.extend({
   border-radius: 12px;
   border-color: #d4e5ee;
   background: #fff;
-  min-height: 540px;
 }
 
 .plans-header h2 {
@@ -244,7 +277,8 @@ export default Vue.extend({
 }
 
 .dialog-card {
-  width: min(620px, 95vw);
+  width: min(620px, min(95vw, 100%));
+  max-width: 100%;
 }
 
 .dialog-header {

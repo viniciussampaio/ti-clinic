@@ -493,6 +493,14 @@ export default Vue.extend({
 }
 
 @media (max-width: 520px) {
+  .home {
+    padding: 1.5rem 0.75rem 2rem;
+  }
+
+  .home-header h1 {
+    font-size: 1.4rem;
+  }
+
   .home-header {
     flex-direction: column;
     align-items: stretch;
@@ -505,6 +513,12 @@ export default Vue.extend({
   .row-meta {
     grid-column: 1 / -1;
     justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>

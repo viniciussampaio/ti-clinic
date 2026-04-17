@@ -77,6 +77,11 @@ export class LoginService implements ILoginService {
 
     return {
       access_token: accessToken,
+      user: {
+        id: login.id as number,
+        email: login.email as string,
+        displayName: login.displayName,
+      },
     };
   }
 }

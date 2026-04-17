@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Doctor } from '../entities/doctor.entity';
 import { Specialty } from '../entities/specialty.entity';
 import { CreateSpecialtyDto } from './dto/create-specialty.dto';
 import { UpdateSpecialtyDto } from './dto/update-specialty.dto';
@@ -10,6 +15,8 @@ export class SpecialtiesService {
   constructor(
     @InjectRepository(Specialty)
     private readonly repo: Repository<Specialty>,
+    @InjectRepository(Doctor)
+    private readonly doctorRepo: Repository<Doctor>,
   ) {}
 
   create(dto: CreateSpecialtyDto) {
@@ -37,6 +44,14 @@ export class SpecialtiesService {
 
   async remove(id: number) {
     const row = await this.findOne(id);
+    const doctorsCount = await this.doctorRepo.count({
+      where: { specialty: { id } },
+    });
+    if (doctorsCount > 0) {
+      throw new ConflictException(
+        'Não é possível excluir esta especialidade: existe médico vinculado.',
+      );
+    }
     await this.repo.remove(row);
   }
 }

@@ -87,11 +87,19 @@ export class LoginController {
     },
   })
   @ApiOkResponse({
-    description: 'Access token',
+    description: 'Access token and public user profile',
     schema: {
       type: 'object',
       properties: {
         access_token: { type: 'string' },
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'number' },
+            email: { type: 'string' },
+            displayName: { type: 'string', nullable: true },
+          },
+        },
         token_type: { type: 'string', example: 'Bearer' },
         expires_in: { type: 'number', example: 3600 },
       },

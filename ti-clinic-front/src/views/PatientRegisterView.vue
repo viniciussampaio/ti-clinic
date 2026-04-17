@@ -1,9 +1,6 @@
 <template>
   <section class="patient-register">
     <div class="header">
-      <div>
-        <h1>Pacientes</h1>
-      </div>
       <q-btn
         color="primary"
         unelevated
@@ -19,12 +16,13 @@
       <q-card-section class="list-header">
         <h2>Pacientes cadastrados</h2>
         <q-input
-          v-model.trim="searchTerm"
+          v-model="searchTerm"
           dense
           outlined
           clearable
           class="search-input"
           placeholder="Buscar por nome ou telefone"
+          @clear="searchTerm = ''"
         >
           <template #prepend>
             <q-icon name="search" />
@@ -34,14 +32,15 @@
 
       <q-separator />
 
-      <q-table
-        flat
-        :data="filteredPatients"
-        :columns="tableColumns"
-        row-key="id"
-        :loading="isLoadingPatients"
-        no-data-label="Nenhum paciente cadastrado."
-      >
+      <div class="table-scroll table-scroll--wide">
+        <q-table
+          flat
+          :data="filteredPatients"
+          :columns="tableColumns"
+          row-key="id"
+          :loading="isLoadingPatients"
+          no-data-label="Nenhum paciente cadastrado."
+        >
         <template #body-cell-birthDate="props">
           <q-td :props="props">
             {{ formatBirthDate(props.row.birthDate) }}
@@ -94,7 +93,8 @@
             </div>
           </q-td>
         </template>
-      </q-table>
+        </q-table>
+      </div>
     </q-card>
 
     <q-dialog v-model="isFormDialogOpen" persistent>
@@ -377,7 +377,9 @@ export default Vue.extend({
       return this.patientToDelete?.name?.trim() || "-";
     },
     filteredPatients(): RegisteredPatient[] {
-      const normalizedTerm = this.searchTerm.trim().toLowerCase();
+      const normalizedTerm = String(this.searchTerm ?? "")
+        .trim()
+        .toLowerCase();
       if (!normalizedTerm) {
         return this.registeredPatients;
       }
@@ -764,7 +766,7 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 .patient-register {
-  width: min(1200px, 90%);
+  width: min(1200px, 100%);
   margin: 0 auto;
   padding: 2rem 1rem 2.5rem;
 }
@@ -792,7 +794,6 @@ export default Vue.extend({
   border-radius: 12px;
   border-color: #d4e5ee;
   background: #fff;
-  min-height: 540px;
 }
 
 .form-grid {
@@ -848,7 +849,8 @@ h2 {
 }
 
 .form-dialog {
-  width: min(620px, 95vw);
+  width: min(620px, min(95vw, 100%));
+  max-width: 100%;
 }
 
 .form-dialog-header {

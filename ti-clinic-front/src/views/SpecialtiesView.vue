@@ -1,7 +1,6 @@
 <template>
   <section class="specialties">
     <div class="header">
-      <h1>Especialidades</h1>
       <q-btn
         color="primary"
         unelevated
@@ -16,38 +15,39 @@
         <h2>Especialidades cadastradas</h2>
       </q-card-section>
       <q-separator />
-      <q-table
-        flat
-        dense
-        :data="specialties"
-        :columns="columns"
-        row-key="id"
-        :loading="isLoadingSpecialties"
-        no-data-label="Nenhuma especialidade cadastrada."
-      >
-        <template #body-cell-actions="props">
-          <q-td :props="props">
-            <div class="actions-cell">
-              <q-btn
-                dense
-                flat
-                round
-                color="primary"
-                icon="edit"
-                @click="openEditDialog(props.row)"
-              />
-              <q-btn
-                dense
-                flat
-                round
-                color="negative"
-                icon="delete"
-                @click="onDeleteSpecialty(props.row.id)"
-              />
-            </div>
-          </q-td>
-        </template>
-      </q-table>
+      <div class="table-scroll">
+        <q-table
+          flat
+          :data="specialties"
+          :columns="columns"
+          row-key="id"
+          :loading="isLoadingSpecialties"
+          no-data-label="Nenhuma especialidade cadastrada."
+        >
+          <template #body-cell-actions="props">
+            <q-td :props="props">
+              <div class="actions-cell">
+                <q-btn
+                  dense
+                  flat
+                  round
+                  color="primary"
+                  icon="edit"
+                  @click="openEditDialog(props.row)"
+                />
+                <q-btn
+                  dense
+                  flat
+                  round
+                  color="negative"
+                  icon="delete"
+                  @click="onDeleteSpecialty(props.row.id)"
+                />
+              </div>
+            </q-td>
+          </template>
+        </q-table>
+      </div>
     </q-card>
 
     <q-dialog v-model="isDialogOpen" persistent>
@@ -121,6 +121,8 @@ export default Vue.extend({
       field: string;
       align?: "left" | "right" | "center";
       sortable?: boolean;
+      style?: string;
+      headerStyle?: string;
     }>;
   } {
     return {
@@ -139,6 +141,7 @@ export default Vue.extend({
           field: "id",
           align: "left",
           sortable: true,
+          
         },
         {
           name: "name",
@@ -153,6 +156,9 @@ export default Vue.extend({
           field: "actions",
           align: "right",
           sortable: false,
+          headerStyle: "text-align: right",
+          style:
+            "width: 5.5rem; white-space: nowrap; text-align: right; padding-left: 0.35rem",
         },
       ],
     };
@@ -203,9 +209,44 @@ export default Vue.extend({
         this.isSubmitting = false;
       }
     },
+    showToast(type: "positive" | "negative", message: string): void {
+      const quasar = (
+        this as Vue & {
+          $q?: {
+            notify: (payload: { type: string; message: string }) => void;
+          };
+        }
+      ).$q;
+      quasar?.notify({ type, message });
+    },
+    extractErrorMessage(error: unknown, fallback: string): string {
+      const data = (
+        error as {
+          response?: { data?: { message?: string | string[] } };
+        }
+      )?.response?.data;
+      const msg = data?.message;
+      if (typeof msg === "string" && msg.trim()) {
+        return msg.trim();
+      }
+      if (Array.isArray(msg) && msg.length && typeof msg[0] === "string") {
+        return msg[0].trim();
+      }
+      return fallback;
+    },
     async onDeleteSpecialty(id: string): Promise<void> {
-      await deleteSpecialtyRequest(id);
-      await this.loadSpecialties();
+      try {
+        await deleteSpecialtyRequest(id);
+        await this.loadSpecialties();
+      } catch (error) {
+        this.showToast(
+          "negative",
+          this.extractErrorMessage(
+            error,
+            "Nao foi possivel excluir a especialidade.",
+          ),
+        );
+      }
     },
     onCloseDialog(): void {
       this.isDialogOpen = false;
@@ -218,7 +259,7 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 .specialties {
-  width: min(900px, 90%);
+  width: min(1140px, 100%);
   margin: 0 auto;
   padding: 2rem 1rem 2.5rem;
 }
@@ -241,7 +282,6 @@ export default Vue.extend({
   border-radius: 12px;
   border-color: #d4e5ee;
   background: #fff;
-  min-height: 540px;
 }
 
 .specialties-header h2 {
@@ -251,7 +291,8 @@ export default Vue.extend({
 }
 
 .dialog-card {
-  width: min(620px, 95vw);
+  width: min(620px, min(95vw, 100%));
+  max-width: 100%;
 }
 
 .dialog-header {
@@ -272,8 +313,13 @@ export default Vue.extend({
 }
 
 .actions-cell {
+  text-align: right;
+}
+
+.actions-row {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.25rem;
 }
 

@@ -1,7 +1,6 @@
 <template>
   <section class="procedures">
     <div class="header">
-      <h1>Procedimentos</h1>
       <q-btn
         color="primary"
         unelevated
@@ -16,44 +15,46 @@
         <h2>Procedimentos cadastrados</h2>
       </q-card-section>
       <q-separator />
-      <q-table
-        flat
-        dense
-        :data="procedures"
-        :columns="columns"
-        row-key="id"
-        :loading="isLoadingProcedures"
-        no-data-label="Nenhum procedimento cadastrado."
-      >
-        <template #body-cell-price="props">
-          <q-td :props="props">
-            {{ formatPrice(props.row.price) }}
-          </q-td>
-        </template>
+      <div class="table-scroll">
+        <q-table
+          flat
+          dense
+          :data="procedures"
+          :columns="columns"
+          row-key="id"
+          :loading="isLoadingProcedures"
+          no-data-label="Nenhum procedimento cadastrado."
+        >
+          <template #body-cell-price="props">
+            <q-td :props="props">
+              {{ formatPrice(props.row.price) }}
+            </q-td>
+          </template>
 
-        <template #body-cell-actions="props">
-          <q-td :props="props">
-            <div class="actions-cell">
-              <q-btn
-                dense
-                flat
-                round
-                color="primary"
-                icon="edit"
-                @click="openEditDialog(props.row)"
-              />
-              <q-btn
-                dense
-                flat
-                round
-                color="negative"
-                icon="delete"
-                @click="onDeleteProcedure(props.row.id)"
-              />
-            </div>
-          </q-td>
-        </template>
-      </q-table>
+          <template #body-cell-actions="props">
+            <q-td :props="props">
+              <div class="actions-cell">
+                <q-btn
+                  dense
+                  flat
+                  round
+                  color="primary"
+                  icon="edit"
+                  @click="openEditDialog(props.row)"
+                />
+                <q-btn
+                  dense
+                  flat
+                  round
+                  color="negative"
+                  icon="delete"
+                  @click="onDeleteProcedure(props.row.id)"
+                />
+              </div>
+            </q-td>
+          </template>
+        </q-table>
+      </div>
     </q-card>
 
     <q-dialog v-model="isDialogOpen" persistent>
@@ -109,12 +110,11 @@
 <script lang="ts">
 import Vue from "vue";
 import {
-  createSpecialtyRequest,
-  deleteSpecialtyRequest,
+  createProcedureRequest,
+  deleteProcedureRequest,
   getProceduresRequest,
-  updateSpecialtyRequest,
+  updateProcedureRequest,
 } from "@/services/procedures/procedures";
-import { Procedure } from "@/types/procedures";
 
 interface ProcedureRow {
   id: string;
@@ -142,6 +142,8 @@ export default Vue.extend({
       field: string;
       align?: "left" | "right" | "center";
       sortable?: boolean;
+      style?: string;
+      headerStyle?: string;
     }>;
   } {
     return {
@@ -182,6 +184,7 @@ export default Vue.extend({
           field: "actions",
           align: "right",
           sortable: false,
+          headerStyle: "text-align: right",
         },
       ],
     };
@@ -194,7 +197,35 @@ export default Vue.extend({
       return Boolean(value) || "Informe o nome do procedimento.";
     },
     validateRequiredPrice(value: string): true | string {
-      return Boolean(value) || "Informe o preco.";
+      if (!String(value).trim()) {
+        return "Informe o preco.";
+      }
+      const parsed = this.parsePriceToNumber(value);
+      if (parsed === null) {
+        return "Informe um valor numerico valido.";
+      }
+      if (parsed < 0) {
+        return "O preco nao pode ser negativo.";
+      }
+      return true;
+    },
+    parsePriceToNumber(raw: string): number | null {
+      const cleaned = String(raw)
+        .replace(/R\$\s?/gi, "")
+        .trim();
+      if (!cleaned) {
+        return null;
+      }
+      const normalized = cleaned.includes(",")
+        ? cleaned.replace(/\./g, "").replace(",", ".")
+        : cleaned;
+      const n = Number(normalized);
+      return Number.isFinite(n) ? n : null;
+    },
+    priceForFormDisplay(raw: string): string {
+      return String(raw)
+        .replace(/R\$\s?/gi, "")
+        .trim();
     },
     formatPrice(value: string): string {
       const normalized = Number(String(value).replace(",", "."));
@@ -231,7 +262,7 @@ export default Vue.extend({
       this.editingProcedureId = procedure.id;
       this.form = {
         name: procedure.name,
-        price: procedure.price,
+        price: this.priceForFormDisplay(procedure.price),
       };
       this.isDialogOpen = true;
     },
@@ -239,17 +270,20 @@ export default Vue.extend({
       if (!this.form.name || !this.form.price) {
         return;
       }
-      const payload: Procedure = {
-        id: this.editingProcedureId ? Number(this.editingProcedureId) : 0,
+      const price = this.parsePriceToNumber(this.form.price);
+      if (price === null || price < 0) {
+        return;
+      }
+      const payload = {
         name: this.form.name,
-        price: this.form.price,
+        price,
       };
       try {
         this.isSubmitting = true;
         if (this.editingProcedureId) {
-          await updateSpecialtyRequest(this.editingProcedureId, payload);
+          await updateProcedureRequest(this.editingProcedureId, payload);
         } else {
-          await createSpecialtyRequest(payload);
+          await createProcedureRequest(payload);
         }
         await this.loadProcedures();
         this.onCloseDialog();
@@ -258,7 +292,7 @@ export default Vue.extend({
       }
     },
     async onDeleteProcedure(id: string): Promise<void> {
-      await deleteSpecialtyRequest(id);
+      await deleteProcedureRequest(id);
       await this.loadProcedures();
     },
     onCloseDialog(): void {
@@ -275,7 +309,7 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 .procedures {
-  width: min(900px, 100%);
+  width: min(1140px, 100%);
   margin: 0 auto;
   padding: 2rem 1rem 2.5rem;
 }
@@ -298,7 +332,26 @@ export default Vue.extend({
   border-radius: 12px;
   border-color: #d4e5ee;
   background: #fff;
-  min-height: 540px;
+}
+
+.procedures-card :deep(table.q-table) {
+  table-layout: auto;
+  width: 100%;
+}
+
+.procedures-card :deep(table.q-table) thead tr th,
+.procedures-card :deep(table.q-table) tbody tr td {
+  padding: 0.35rem 0.45rem;
+}
+
+.procedures-card :deep(table.q-table) thead tr th:first-child,
+.procedures-card :deep(table.q-table) tbody tr td:first-child {
+  padding-right: 0.35rem;
+}
+
+.procedures-card :deep(table.q-table) thead tr th:last-child,
+.procedures-card :deep(table.q-table) tbody tr td:last-child {
+  padding-left: 0.35rem;
 }
 
 .procedures-header h2 {
@@ -308,7 +361,8 @@ export default Vue.extend({
 }
 
 .dialog-card {
-  width: min(620px, 95vw);
+  width: min(620px, min(95vw, 100%));
+  max-width: 100%;
 }
 
 .dialog-header {
